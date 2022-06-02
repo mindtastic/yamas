@@ -13,6 +13,10 @@ All the services of the legacy authentication flow sat together with a cool refr
 
 ## Makes your dreams come true
 
+The general concept of Yámas is documented here. So intuitive, you could have developed it in your sleep.
+
+![Architecture diagram](/docs/diagram.svg)
+
 ## State of the project
 
 The Elixir is still brewing. Code and Documentation will be added regularly and at short intervals.
