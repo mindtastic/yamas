@@ -1,9 +1,9 @@
 defmodule DSearch.Store.FileStore do
 
   @type t :: %__MODULE__{
-    pid: pid,
-    path: binary
-  }
+          pid: pid,
+          path: binary
+        }
 
   @enforce_keys [:pid, :path]
   defstruct [:pid, :path]
@@ -25,7 +25,7 @@ defmodule DSearch.Store.FileStore do
   end
 
   defp exclusive_access!(path) do
-    if not(:global.set_lock({{__MODULE__, path}, self()}, [node()], 0)) do
+    if not :global.set_lock({{__MODULE__, path}, self()}, [node()], 0) do
       raise ArgumentError, message: "DB file is already in use by another BEAM process: '#{path}"
     end
   end
@@ -53,6 +53,7 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
         case append_chunks(file, bytes, pos) do
           {:ok, bytes_written} ->
             {pos, {file, pos + bytes_written}}
+
           _ ->
             {:ok, pos} = :file.position(file, :eof)
             {{:error, "Write error"}, {file, pos}}
@@ -71,6 +72,7 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
         case append_header(file, header_bytes, pos) do
           {:ok, loc, bytes_written} ->
             {loc, {file, pos + bytes_written}}
+
           _ ->
             {:ok, pos} = :file.position(file, :eof)
             {{:error, "Write error"}, {file, pos}}
@@ -89,14 +91,15 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
   end
 
   def close(%FileStore{pid: pid}) do
-    with :ok <- Agent.update(
-      pid,
-      fn {file, pos} ->
-        :file.sync(file)
-        {file, pos}
-      end,
-      :infinity
-    ) do
+    with :ok <-
+           Agent.update(
+             pid,
+             fn {file, pos} ->
+               :file.sync(file)
+               {file, pos}
+             end,
+             :infinity
+           ) do
       Agent.stop(pid)
     end
   end
@@ -118,6 +121,7 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
 
   defp locate_last_header(file, location) do
     loc = Chunks.latest_possible_header_position(location)
+
     with {:ok, <<chunk_header::8>>} <- :file.pread(file, loc, 1) do
       case Chunks.header_chunk_header?(chunk_header) do
         true -> loc
@@ -143,7 +147,7 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
   defp read_term(file, location) do
     with {:ok, <<length::32>>, len} <- read_chunks(file, location, 4),
          {:ok, bytes, _} <- read_chunks(file, location + len, length) do
-          {:ok, deserialize(bytes)}
+      {:ok, deserialize(bytes)}
     end
   rescue
     error -> {:error, error}
@@ -156,6 +160,7 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
       {:ok, bin} ->
         bytes = Chunks.strip_chunk_headers(bin, location, size_with_headers) |> Enum.join()
         {:ok, bytes, size_with_headers}
+
       :eof ->
         {:error, %ArgumentError{message: "unexpected EOF by read parameters"}}
     end
@@ -191,5 +196,4 @@ defimpl DSearch.Store, for: DSearch.Store.FileStore do
     chunk_list
     |> Enum.reduce(0, fn bytes, size -> size + byte_size(bytes) end)
   end
-
 end

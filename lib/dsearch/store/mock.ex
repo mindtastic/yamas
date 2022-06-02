@@ -4,8 +4,8 @@ defmodule DSearch.Store.MockStore do
   # MockStore is an implementation of the DSearch.Store protocol
   # to allow testing without actually writing to the file system
   @type t :: %__MODULE__{
-    pid: pid
-  }
+          pid: pid
+        }
 
   defstruct pid: nil
 
@@ -15,7 +15,6 @@ defmodule DSearch.Store.MockStore do
       {:ok, %DSearch.Store.MockStore{pid: pid}}
     end
   end
-
 end
 
 defimpl DSearch.Store, for: DSearch.Store.MockStore do
@@ -31,9 +30,9 @@ defimpl DSearch.Store, for: DSearch.Store.MockStore do
   def put_node(%MockStore{pid: pid}, node) do
     Agent.get_and_update(
       pid,
-      fn {map, _} ->
+      fn {map, latest_header_loc} ->
         new_loc = Enum.count(map)
-        {new_loc, Map.put(map, new_loc, node)}
+        {new_loc, {Map.put(map, new_loc, node), latest_header_loc}}
       end,
       :infinity
     )
@@ -81,5 +80,4 @@ defimpl DSearch.Store, for: DSearch.Store.MockStore do
   def open?(%MockStore{pid: pid}) do
     Process.alive?(pid)
   end
-
 end

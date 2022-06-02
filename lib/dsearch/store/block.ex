@@ -15,7 +15,8 @@ defmodule DSearch.Store.Chunks do
 
   @chunk_size 1024
   @data_type_indicator 0
-  @header_type_indicator 128  # MSB of a chunk header will be 1 for a header chunk
+  # MSB of a chunk header will be 1 for a header chunk
+  @header_type_indicator 128
 
   # API function
 
@@ -37,6 +38,7 @@ defmodule DSearch.Store.Chunks do
     case rem(loc, chunk_size) do
       0 ->
         trunc(headers_length(length, chunk_size) + length)
+
       r ->
         prefix = chunk_size - r
         rest = length - prefix
@@ -49,6 +51,7 @@ defmodule DSearch.Store.Chunks do
     case rem(loc, chunk_size) do
       0 ->
         {loc, [<<@header_type_indicator>> | add_headers(bin, loc + 1, chunk_size)]}
+
       r ->
         chunk_rest = chunk_size - r
         pad = String.pad_leading(<<>>, chunk_rest, <<@data_type_indicator>>)
@@ -71,14 +74,17 @@ defmodule DSearch.Store.Chunks do
 
   defp at_chunk_boundary(bin, loc, chunk_size, func) do
     case rem(loc, chunk_size) do
-      0 -> func.(bin, [], chunk_size)
+      0 ->
+        func.(bin, [], chunk_size)
+
       r ->
         chunk_rest = chunk_size - r
+
         if byte_size(bin) <= chunk_rest do
           [bin]
         else
-            <<prefix::binary - size(chunk_rest), rest::binary>> = bin
-            func.(rest, [prefix], chunk_size)
+          <<prefix::binary-size(chunk_rest), rest::binary>> = bin
+          func.(rest, [prefix], chunk_size)
         end
     end
   end
@@ -87,20 +93,20 @@ defmodule DSearch.Store.Chunks do
     data_size = chunk_size - 1
 
     if byte_size(bin) <= data_size do
-      [bin | [<<@data_type_indicator>>| acc]] |> Enum.reverse()
+      [bin | [<<@data_type_indicator>> | acc]] |> Enum.reverse()
     else
-      <<chunk::binary - size(data_size), rest::binary>> = bin
+      <<chunk::binary-size(data_size), rest::binary>> = bin
       add_headers(rest, [chunk | [<<@data_type_indicator>> | acc]], chunk_size)
     end
   end
 
   defp strip_headers(bin, acc, chunk_size) do
     if byte_size(bin) <= chunk_size do
-      <<_::binary - 1, chunk::binary>> = bin
+      <<_::binary-1, chunk::binary>> = bin
       [chunk | acc] |> Enum.reverse()
     else
       data_size = chunk_size - 1
-      <<_::binary-1, chunk::binary - size(data_size), rest::binary>> = bin
+      <<_::binary-1, chunk::binary-size(data_size), rest::binary>> = bin
       strip_headers(rest, [chunk | acc], chunk_size)
     end
   end

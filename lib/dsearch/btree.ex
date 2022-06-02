@@ -34,12 +34,12 @@ defmodule DSearch.BTree do
   @type node_type :: :leaf_node | :branch_node | :value_node | :tombstone_node
 
   @type t :: %__MODULE__{
-    root: branch_node | leaf_node,
-    root_location: location,
-    size: size,
-    store: Store.t(),
-    capacity: non_neg_integer
-  }
+          root: branch_node | leaf_node,
+          root_location: location,
+          size: size,
+          store: Store.t(),
+          capacity: non_neg_integer
+        }
 
   @default_capacity 64
   @enforce_keys [:root, :root_location, :size, :store, :capacity]
@@ -69,30 +69,33 @@ defmodule DSearch.BTree do
   @spec load(Enumerable.t(), Store.t(), pos_integer) :: BTree.t()
 
   def load(enum, store, cap \\ @default_capacity) do
-     unless Store.empty?(store), do: raise(ArgumentError, "cannot load into non-empty store")
+    unless Store.empty?(store), do: raise(ArgumentError, "cannot load into non-empty store")
 
-      case Enum.reduce(enum, {[], 0}, fn {k, v}, {st, count} -> {load_node(store, k, value_node(value: v), st, 1, cap), count + 1} end) do
-        {_ , 0} -> new(store, cap)
-        {st, count} ->
-           {root, root_location} = finalize_load(store, st, 1, cap)
-           Store.put_header(store, {count, root_location, 0})
-          %BTree{root: root, root_location: root_location, capacity: cap, store: store, size: count}
-      end
+    case Enum.reduce(enum, {[], 0}, fn {k, v}, {st, count} ->
+           {load_node(store, k, value_node(value: v), st, 1, cap), count + 1}
+         end) do
+      {_, 0} ->
+        new(store, cap)
+
+      {st, count} ->
+        {root, root_location} = finalize_load(store, st, 1, cap)
+        Store.put_header(store, {count, root_location, 0})
+        %BTree{root: root, root_location: root_location, capacity: cap, store: store, size: count}
+    end
   end
-
 
   # `fetch/2` retrieves the value for a given `key`
   # Returns:
   #   `{:ok, value}` on success
   #   `:error` otherwise
   def fetch(%BTree{root: root, store: store}, key) do
-
   end
-
 
   # Private functions
 
-  @spec load_node(Store.t(), key, tree_node, [tree_node], pos_integer, capacity) :: [[child_pointer]]
+  @spec load_node(Store.t(), key, tree_node, [tree_node], pos_integer, capacity) :: [
+          [child_pointer]
+        ]
 
   defp load_node(store, key, node, [], _, _) do
     [[{key, Store.put_node(store, node)}]]
@@ -100,14 +103,16 @@ defmodule DSearch.BTree do
 
   defp load_node(store, key, node, [children | rest], level, cap) do
     children = [{key, Store.put_node(store, node)} | children]
+
     case length(children) do
       ^cap ->
         parent = make_node(store, node)
         parent_key = List.last(keys(children))
         [[] | load_node(store, parent_key, parent, rest, level + 1, cap)]
-       _ ->
+
+      _ ->
         [children | rest]
-     end
+    end
   end
 
   @spec make_node([child_pointer], pos_integer) :: structural_node
@@ -121,24 +126,32 @@ defmodule DSearch.BTree do
     end
   end
 
-
   # `leaf_for_key/4` finds the leaf node for a given
   #
   #
   defp leaf_for_key(branch = {@branch, children}, store, key, path) do
-
+    # Enum.reduce_while(children, nil, fn
+    #   {_, loc}, nil ->
+    #     {:cont, loc}
+    #   {k, loc}, acc ->
+    #     if k <= key, do: {:cont, loc}, else: {:halt, acc}
+    # end)
+    # |> &(Store.get_node(store, &1)).()
+    # |> leaf_for_key(store, key, [branch | path])
   end
 
   defp leaf_for_key(leaf = {@leaf, _}, _, _, path) do
     {leaf, path}
   end
 
-  @spec finalize_load(Store.t(), [[child_pointer]], pos_integer, capacity) :: {tree_node, location}
+  @spec finalize_load(Store.t(), [[child_pointer]], pos_integer, capacity) ::
+          {tree_node, location}
 
   defp finalize_load(store, [children], level, _) do
     case children do
       [{_, loc}] when level > 1 ->
         {Store.get_node(store, loc), loc}
+
       _ ->
         node = make_node(children, level)
         {node, Store.put_node(store, node)}
@@ -149,6 +162,7 @@ defmodule DSearch.BTree do
     case children do
       [] ->
         finalize_load(store, rest, level + 1, cap)
+
       _ ->
         node = make_node(children, level)
         key = List.last(keys(children))
@@ -157,11 +171,9 @@ defmodule DSearch.BTree do
     end
   end
 
-
   defp keys(tuples) do
     Enum.map(tuples, &elem(&1, 0))
   end
-
 end
 
 defimpl Enumerable, for: DSearch.BTree do

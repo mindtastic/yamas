@@ -14,12 +14,11 @@ defmodule DSearch.BTree.DFS do
   @deleted BTree.__deleted__()
 
   @spec reduce(
-    BTree.t(),
-    Enumerable.acc(),
-    Enumerable.reducer(),
-    (BTree.node_type(),
-    Store.t() -> any)
-    ) :: Enumerable.result()
+          BTree.t(),
+          Enumerable.acc(),
+          Enumerable.reducer(),
+          (BTree.node_type(), Store.t() -> any)
+        ) :: Enumerable.result()
 
   def reduce(%BTree{root: root, store: store}, cmd_acc, fun, get_children) do
     perform_reduce({[], [[{nil, root}]]}, cmd_acc, fun, get_children, store)
@@ -64,5 +63,4 @@ defmodule DSearch.BTree.DFS do
   defp next({[{key, @deleted} | siblings], rest}, store, get_children) do
     {{siblings, rest}, {key, get_children.(@deleted, store)}}
   end
-
 end
