@@ -1,5 +1,5 @@
 ![Yamas - Yet another maddening authentication service](/docs/logo-dark.svg#gh-dark-mode-only)
-![Yamas - Yet another maddening authentication service](/blob/main/docs/logo-light.svg#gh-light-mode-only)
+![Yamas - Yet another maddening authentication service](/docs/logo-light.svg#gh-light-mode-only)
 
 The [mindtastic user authentication system](https://github.com/mindtastic/bouncer) is characterized by it's ~~impenetrably complex and difficult to understand~~ unique, feature-rich authentication flow. As it befits for a state of the art cloud application an undoubtedly adequate number of microservices are involved in the authentication flow.
 
