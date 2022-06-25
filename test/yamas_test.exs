@@ -1,8 +1,8 @@
-defmodule YAMASTest do
+defmodule YamasTest do
   use ExUnit.Case
-  doctest YAMAS
+  doctest Yamas
 
   test "greets the world" do
-    assert YAMAS.hello() == :world
+    assert Yamas.hello() == :world
   end
 end

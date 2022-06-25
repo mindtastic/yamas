@@ -1,6 +1,6 @@
-defmodule YAMAS do
+defmodule Yamas do
   @moduledoc """
-  Documentation for `YAMAS`.
+  Documentation for `Yamas`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule YAMAS do
 
   ## Examples
 
-      iex> YAMAS.hello()
+      iex> Yamas.hello()
       :world
 
   """
